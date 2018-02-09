@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -72,9 +73,11 @@ func main() {
 	}
 	//store all positional arguments
 	p := os.Args[2:]
+
 	var fipIds []string
 	if len(p) == 1 {
 		split := strings.Split(p[0], ",")
+		sort.Strings(split)
 		for _, v := range split {
 			fipIds = append(fipIds, getFIPS(v))
 		}
