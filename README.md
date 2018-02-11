@@ -20,3 +20,4 @@ e.g. census --averages oregon,washington,california
 
 The included Makefile will produce builds for both macOS and Linux (64bit).
 
+Pre-built binaries are included in the `builds` directory.
