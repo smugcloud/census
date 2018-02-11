@@ -64,10 +64,13 @@ type StateDetails struct {
 
 func main() {
 	flag.Parse()
-
+	flag.Usage = func() {
+		fmt.Printf("Usage: census [params] [comma separated list of states]\n\ne.g. census --averages oregon,washington,california\n\n")
+		flag.PrintDefaults()
+	}
 	// Verify that a flag has been provided
 	if len(os.Args) < 2 {
-		fmt.Printf("One command line flag is required.\n")
+		fmt.Printf("One command line flag is required.\n\n")
 		flag.Usage()
 		os.Exit(-1)
 	}
@@ -92,7 +95,11 @@ func main() {
 	case averages == true:
 		fmt.Println(getAverageIncomeBelowPoverty(fipIds))
 	case cs == true:
-		printCSVStates(fipIds)
+		var finalFile [][]string
+		finalFile = printCSVStates(fipIds)
+		w := csv.NewWriter(os.Stdout)
+		w.WriteAll(finalFile)
+
 	default:
 		flag.PrintDefaults()
 		os.Exit(-1)
@@ -100,7 +107,7 @@ func main() {
 
 }
 
-func printCSVStates(fips []string) {
+func printCSVStates(fips []string) [][]string {
 	var allStates []StateDetails
 	for _, v := range fips {
 		resp, err := http.Get(data + v + "?format=json")
@@ -117,40 +124,41 @@ func printCSVStates(fips []string) {
 		allStates = append(allStates, tmpState)
 
 	}
+	var csvfile []string
+	finalFile := make([][]string, len(allStates))
 
-	w := csv.NewWriter(os.Stdout)
-	for _, conv := range allStates {
-		var record []string
-		record = append(record, conv.Results[0].GeographyID)
-		record = append(record, conv.Results[0].GeographyName)
-		record = append(record, strconv.FormatFloat(conv.Results[0].LandArea, 'g', -1, 64))
-		record = append(record, strconv.Itoa(conv.Results[0].Population))
-		record = append(record, strconv.Itoa(conv.Results[0].Households))
-		record = append(record, strconv.FormatFloat(conv.Results[0].RaceWhite, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].RaceBlack, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].RaceHispanic, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].RaceAsian, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].RaceNativeAmerican, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].IncomeBelowPoverty, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].MedianIncome, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].IncomeLessThan25, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].IncomeBetween25To50, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].IncomeBetween50To100, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].IncomeBetween100To200, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].IncomeGreater200, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].EducationHighSchoolGraduate, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].EducationBachelorOrGreater, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].AgeUnder5, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].AgeBetween5To19, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].AgeBetween20To34, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].AgeBetween35To59, 'g', -1, 64))
-		record = append(record, strconv.FormatFloat(conv.Results[0].AgeGreaterThan60, 'g', -1, 64))
-		record = append(record, strconv.FormatBool(conv.Results[0].MyAreaIndicator))
-		w.Write(record)
+	//TODO: Figure out a way to do this dynamically
+	for i, conv := range allStates {
+		csvfile = append(csvfile, conv.Results[0].GeographyID)
+		csvfile = append(csvfile, conv.Results[0].GeographyName)
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].LandArea, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.Itoa(conv.Results[0].Population))
+		csvfile = append(csvfile, strconv.Itoa(conv.Results[0].Households))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].RaceWhite, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].RaceBlack, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].RaceHispanic, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].RaceAsian, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].RaceNativeAmerican, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].IncomeBelowPoverty, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].MedianIncome, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].IncomeLessThan25, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].IncomeBetween25To50, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].IncomeBetween50To100, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].IncomeBetween100To200, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].IncomeGreater200, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].EducationHighSchoolGraduate, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].EducationBachelorOrGreater, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].AgeUnder5, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].AgeBetween5To19, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].AgeBetween20To34, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].AgeBetween35To59, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].AgeGreaterThan60, 'g', -1, 64))
+		csvfile = append(csvfile, strconv.FormatBool(conv.Results[0].MyAreaIndicator))
+		finalFile[i] = append(finalFile[i], csvfile...)
+		csvfile = csvfile[:0]
 	}
-	w.Flush()
-	//}
 
+	return finalFile
 }
 
 func getAverageIncomeBelowPoverty(fips []string) float64 {
@@ -193,7 +201,7 @@ func getFIPS(state string) string {
 }
 
 func init() {
-	flag.BoolVar(&cs, "csv", false, "Print CSV output.")
-	flag.BoolVar(&averages, "averages", false, "Return average ")
+	flag.BoolVar(&cs, "csv", false, "Print CSV output of all state information.")
+	flag.BoolVar(&averages, "averages", false, "Return average income below poverty across\n\tthe states specified.")
 
 }
