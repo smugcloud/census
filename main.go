@@ -161,7 +161,7 @@ func printCSVStates(fips []string) [][]string {
 	return finalFile
 }
 
-func getAverageIncomeBelowPoverty(fips []string) float64 {
+func getAverageIncomeBelowPoverty(fips []string) int {
 	var sum float64
 	var income StateDetails
 	for _, v := range fips {
@@ -178,11 +178,9 @@ func getAverageIncomeBelowPoverty(fips []string) float64 {
 		}
 
 		sum += income.Results[0].IncomeBelowPoverty
-		// fmt.Printf("Sum is %v\n", sum)
 
 	}
-	// fmt.Printf("Sum is %v", sum)
-	return sum / float64(len(fips))
+	return int((sum / float64(len(fips))) * 100)
 }
 
 func getFIPS(state string) string {
@@ -194,10 +192,8 @@ func getFIPS(state string) string {
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	json.Unmarshal(body, &fips)
-	// fmt.Printf("%v\n", string(body))
-	// json.NewDecoder(resp.Body).Decode(&fips)
+
 	return fips.Results.State[0].Fips
-	// fmt.Printf("Fips value: %s\n", fips.Results.State[0].Fips)
 }
 
 func init() {

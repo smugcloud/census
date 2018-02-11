@@ -1,20 +1,10 @@
 package main
 
 import (
-	"bytes"
-	"log"
-	"os"
 	"reflect"
 	"testing"
 )
 
-func captureOutput(f func()) string {
-	var buf bytes.Buffer
-	log.SetOutput(&buf)
-	f()
-	defer log.SetOutput(os.Stderr)
-	return buf.String()
-}
 func TestAverage(t *testing.T) {
 	split := []string{"oregon", "washington", "california"}
 	var fipIds []string
@@ -23,7 +13,7 @@ func TestAverage(t *testing.T) {
 		fipIds = append(fipIds, getFIPS(v))
 	}
 	output := getAverageIncomeBelowPoverty(fipIds)
-	if output != 0.15046666666666667 {
+	if output != 15 {
 		t.Fatalf("Average output does not match: %v", output)
 	}
 }
