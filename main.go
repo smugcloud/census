@@ -22,16 +22,19 @@ var cs, averages bool
 
 var split []string
 
+//Geography holds the State detail so we can get the fip
 type Geography struct {
 	Results struct {
 		State []State `json:"state"`
 	} `json:"Results"`
 }
 
+//State holds the fip from the json response
 type State struct {
 	Fips string `json:"fips"`
 }
 
+//StateDetails is the full list so we can create the CSV, or average
 type StateDetails struct {
 	Results []struct {
 		GeographyID                 string  `json:"geographyId"`
@@ -64,6 +67,7 @@ type StateDetails struct {
 
 func main() {
 	flag.Parse()
+	//Create a slightly better usage description
 	flag.Usage = func() {
 		fmt.Printf("Usage: census [params] [comma separated list of states]\n\ne.g. census --averages oregon,washington,california\n\n")
 		flag.PrintDefaults()
@@ -78,9 +82,14 @@ func main() {
 	p := os.Args[2:]
 
 	var fipIds []string
+	//Happy path to keep things simple.  Ideally, spaces between the comma
+	//and the next state should be allowed (TODO)
 	if len(p) == 1 {
+		//split on the comma to build our slice
 		split := strings.Split(p[0], ",")
+		//sort it so the output stays alphabetically sorted
 		sort.Strings(split)
+		//Get the fip ID's to do the remaining actions
 		for _, v := range split {
 			fipIds = append(fipIds, getFIPS(v))
 		}
@@ -107,6 +116,7 @@ func main() {
 
 }
 
+//printCSVStates gets us a two dimensional slice so we can use the CSV WriteAll function
 func printCSVStates(fips []string) [][]string {
 	var allStates []StateDetails
 	for _, v := range fips {
@@ -161,6 +171,7 @@ func printCSVStates(fips []string) [][]string {
 	return finalFile
 }
 
+//getAverageIncomeBelowPoverty gives us the integer showing the average income
 func getAverageIncomeBelowPoverty(fips []string) int {
 	var sum float64
 	var income StateDetails
@@ -183,6 +194,7 @@ func getAverageIncomeBelowPoverty(fips []string) int {
 	return int((sum / float64(len(fips))) * 100)
 }
 
+//Get the fip ID for a given state
 func getFIPS(state string) string {
 	var fips Geography
 	resp, err := http.Get(api + "census/state/" + state + "?format=json")
@@ -196,6 +208,7 @@ func getFIPS(state string) string {
 	return fips.Results.State[0].Fips
 }
 
+//Set our CLI flags
 func init() {
 	flag.BoolVar(&cs, "csv", false, "Print CSV output of all state information.")
 	flag.BoolVar(&averages, "averages", false, "Return average income below poverty across\n\tthe states specified.")

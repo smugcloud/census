@@ -1,6 +1,8 @@
 # Census CLI Tool
 
-Tool which interacts with the Census API to retrieve two possible sets of data.
+CLI utility which interacts with the Census API to retrieve two possible sets of data.
+
+The standard libary (1.9.2) was explicitly used to prevent any external dependencies.
 
 ## Usage
 
