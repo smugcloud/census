@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -40,8 +41,8 @@ type StateDetails struct {
 		GeographyID                 string  `json:"geographyId"`
 		GeographyName               string  `json:"geographyName"`
 		LandArea                    float64 `json:"landArea"`
-		Population                  int     `json:"population"`
-		Households                  int     `json:"households"`
+		Population                  uint64  `json:"population"`
+		Households                  uint64  `json:"households"`
 		RaceWhite                   float64 `json:"raceWhite"`
 		RaceBlack                   float64 `json:"raceBlack"`
 		RaceHispanic                float64 `json:"raceHispanic"`
@@ -137,33 +138,29 @@ func printCSVStates(fips []string) [][]string {
 	var csvfile []string
 	finalFile := make([][]string, len(allStates))
 
-	//TODO: Figure out a way to do this dynamically
+	//More concise and scalable way to convert the values to strings for writing
+	//to the CSV functions
+	// for i, conv := range
+
+	//Using reflect and strconv to dynamically capture the values observed
+	//in the json response, and convert it to a string for the two-dimensional slice
+	//used by the CSV writer.
 	for i, conv := range allStates {
-		csvfile = append(csvfile, conv.Results[0].GeographyID)
-		csvfile = append(csvfile, conv.Results[0].GeographyName)
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].LandArea, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.Itoa(conv.Results[0].Population))
-		csvfile = append(csvfile, strconv.Itoa(conv.Results[0].Households))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].RaceWhite, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].RaceBlack, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].RaceHispanic, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].RaceAsian, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].RaceNativeAmerican, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].IncomeBelowPoverty, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].MedianIncome, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].IncomeLessThan25, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].IncomeBetween25To50, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].IncomeBetween50To100, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].IncomeBetween100To200, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].IncomeGreater200, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].EducationHighSchoolGraduate, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].EducationBachelorOrGreater, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].AgeUnder5, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].AgeBetween5To19, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].AgeBetween20To34, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].AgeBetween35To59, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatFloat(conv.Results[0].AgeGreaterThan60, 'g', -1, 64))
-		csvfile = append(csvfile, strconv.FormatBool(conv.Results[0].MyAreaIndicator))
+		t := reflect.ValueOf(&conv.Results[0]).Elem()
+		for p := 0; p < t.NumField(); p++ {
+			switch t.Field(p).Interface().(type) {
+			case bool:
+				csvfile = append(csvfile, strconv.FormatBool(t.Field(p).Bool()))
+			case float64:
+				csvfile = append(csvfile, strconv.FormatFloat(t.Field(p).Float(), 'g', -1, 64))
+			case uint64:
+				csvfile = append(csvfile, strconv.FormatUint(t.Field(p).Uint(), 10))
+			case string:
+				csvfile = append(csvfile, t.Field(p).Interface().(string))
+			}
+
+		}
+
 		finalFile[i] = append(finalFile[i], csvfile...)
 		csvfile = csvfile[:0]
 	}

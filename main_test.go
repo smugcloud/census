@@ -28,6 +28,6 @@ func TestCSV(t *testing.T) {
 		{"53", "Washington", "70555.17981912", "7077005", "3091503", "0.7885", "0.028", "0.1076", "0.0686", "0.0073", "0.1348", "63192.7444", "0.1986", "0.2379", "0.3333", "0.1894", "0.0408", "0.8624", "0.2743", "0.0556", "0.2023", "0.1933", "0.3315", "0.2172", "false"}}
 
 	if reflect.DeepEqual(csvfile, compare) == false {
-		t.Fatalf("2D slices don't match: %v", csvfile)
+		t.Fatalf("2D slices don't match: \ncompare: %v\n csvfile: %v", compare, csvfile)
 	}
 }
